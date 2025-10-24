@@ -392,12 +392,6 @@ curl -H "Authorization: Bearer $ACCESS" \
 
 ---
 
-## 📝 Lisensi
-
-> Tentukan lisensi sesuai kebutuhan (mis. MIT/Proprietary). Tambahkan file `LICENSE`.
-
----
-
 ## 🙌 Kontribusi
 
 - Buka issue/PR dengan deskripsi jelas.
