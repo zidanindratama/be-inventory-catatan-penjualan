@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
 import { Strategy } from 'passport-jwt';
 import { Request } from 'express';
-import { Injectable } from '@nestjs/common';
 
 function extractRefresh(req: Request) {
   const token = req.cookies?.refresh_token || req.header('x-refresh-token');

@@ -6,6 +6,7 @@ import {
   Req,
   UsePipes,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import {
   LoginSchema,
@@ -13,9 +14,8 @@ import {
   RegisterInput,
   LoginInput,
 } from './dto/auth.dto';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller('auth')
 export class AuthController {
