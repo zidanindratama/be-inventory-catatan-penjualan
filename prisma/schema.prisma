@@ -1,0 +1,103 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id           String        @id @default(auto()) @map("_id") @db.ObjectId
+    email        String        @unique
+    name         String
+    passwordHash String
+    role         Role          @default(USER)
+    refreshToken String?
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime?
+    transactions Transaction[]
+}
+
+enum Role {
+    ADMIN
+    USER
+}
+
+model Item {
+    id           String            @id @default(auto()) @map("_id") @db.ObjectId
+    name         String            @unique
+    costPrice    Int
+    sellPrice    Int
+    stock        Int               @default(0)
+    imageUrl     String?
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime?
+    transactions TransactionItem[]
+}
+
+model Transaction {
+    id   String   @id @default(auto()) @map("_id") @db.ObjectId
+    date DateTime @default(now())
+    type TxType
+    note String?
+
+    payment     Payment? @relation("TransactionPayment")
+    createdById String?  @db.ObjectId
+    createdBy   User?    @relation(fields: [createdById], references: [id])
+
+    items TransactionItem[]
+
+    financeEntry Finance? @relation("TransactionFinance")
+
+    createdAt DateTime @default(now())
+}
+
+enum TxType {
+    SALE
+    STOCK_IN
+    REJECT
+    ADJUST
+}
+
+model TransactionItem {
+    id            String @id @default(auto()) @map("_id") @db.ObjectId
+    transactionId String @db.ObjectId
+    itemId        String @db.ObjectId
+    qty           Int
+    unitCost      Int
+    unitPrice     Int?
+    subtotalCost  Int
+    subtotalSell  Int?
+
+    transaction Transaction? @relation(fields: [transactionId], references: [id])
+    item        Item?        @relation(fields: [itemId], references: [id])
+}
+
+model Payment {
+    id          String    @id @default(auto()) @map("_id") @db.ObjectId
+    method      PayMethod
+    amount      Int
+    transferRef String?
+    createdAt   DateTime  @default(now())
+
+    transactionId String      @unique @db.ObjectId
+    transaction   Transaction @relation("TransactionPayment", fields: [transactionId], references: [id])
+}
+
+enum PayMethod {
+    CASH
+    TRANSFER
+}
+
+model Finance {
+    id           String   @id @default(auto()) @map("_id") @db.ObjectId
+    description  String
+    income       Int      @default(0)
+    expense      Int      @default(0)
+    balanceAfter Int
+    createdAt    DateTime @default(now())
+
+    transactionId String?      @unique @db.ObjectId
+    transaction   Transaction? @relation("TransactionFinance", fields: [transactionId], references: [id])
+}
