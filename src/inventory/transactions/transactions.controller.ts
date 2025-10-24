@@ -13,7 +13,10 @@ import {
 } from './dto/transaction.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { Role } from '@prisma/client';
+import { Auth } from 'src/common/decorators/auth.decorator';
 
+@Auth(Role.ADMIN)
 @Controller('transactions')
 @UseGuards(AuthGuard('jwt'))
 export class TransactionsController {

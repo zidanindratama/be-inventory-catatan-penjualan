@@ -1,85 +1,413 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Inventory Catatan Penjualan — README
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> Aplikasi **Inventory & Catatan Penjualan** berbasis **NestJS + Prisma (MongoDB)** dengan **JWT Auth**, role-based authorization, validasi **Zod**, dan modul **Finance** (ringkasan, arus kas, tren, gross profit, dsb).
+> Response API seragam (`{ success: boolean, data|error }`) dan error tertangani lewat `HttpExceptionFilter`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## ✨ Fitur Utama
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Auth (JWT Access + Refresh)**
+  - Registrasi & login
+  - Refresh token
+  - Guard `jwt` & `jwt-refresh`
+  - Role-based: `ADMIN`, `USER`
 
-## Project setup
+- **Manajemen User**
+  - Me (`/users/me`)
+  - List, detail, update, hapus (ADMIN)
+
+- **Manajemen Item**
+  - List + pencarian + pagination
+  - Detail, create/update/delete (create/update/delete hanya `ADMIN`)
+
+- **Transaksi Stok & Penjualan**
+  - `SALE`, `STOCK_IN`, `REJECT`, `ADJUST`
+  - Validasi `ObjectId` untuk `itemId`
+  - Update stok otomatis + guard stok negatif
+  - Payment khusus `SALE` (CASH/TRANSFER)
+  - Auto buat **Finance entry**
+
+- **Keuangan (Finance)**
+  - **Summary**: omset, pengeluaran, saldo akhir, modal stok
+  - **Cashflow** per tipe transaksi
+  - **Trend** per hari/minggu/bulan (income, expense, net, balance)
+  - **Gross Profit** (income, COGS, margin%)
+  - **Payment Breakdown** (CASH/TRANSFER/UNPAID)
+  - **Statement** dengan pagination & filter tanggal/q
+
+- **Validasi & Error Handling**
+  - `ZodValidationPipe` untuk DTO berbasis Zod
+  - `HttpExceptionFilter` (Zod, Prisma Known Errors)
+  - `ResponseInterceptor` bungkus `{ success: true, data }`
+
+---
+
+## 🧱 Teknologi
+
+- **Backend**: NestJS 10
+- **Auth**: `@nestjs/jwt` (JWT access & refresh)
+- **ORM**: Prisma (MongoDB)
+- **DB**: MongoDB Atlas / self-hosted
+- **Validation**: Zod (`@anatine/zod-nestjs` untuk DTO)
+- **Security**: Helmet, CORS, Cookie Parser
+- **Image (opsional)**: Cloudinary (env sudah disiapkan)
+
+---
+
+## 📁 Struktur Skema (Prisma)
+
+- **User**: `email`, `name`, `passwordHash`, `role`, `refreshToken?`
+- **Item**: `name`, `costPrice`, `sellPrice`, `stock`, `imageUrl?`
+- **Transaction**: `type` (`SALE|STOCK_IN|REJECT|ADJUST`), `date`, `note?`, `items[]`, `payment?`, `financeEntry?`, `createdBy?`
+- **TransactionItem**: `itemId`, `qty`, `unitCost`, `unitPrice?`, `subtotalCost`, `subtotalSell?`
+- **Payment**: `method` (`CASH|TRANSFER`), `amount`, `transferRef?` (hanya untuk `SALE`)
+- **Finance**: `description`, `income`, `expense`, `balanceAfter`, relasi `transaction?`
+
+> Semua ID menggunakan **Mongo ObjectId**.
+
+---
+
+## 🔧 Menjalankan Secara Lokal
+
+### 1) Persiapan
+
+- Node.js 18+
+- MongoDB (mis. MongoDB Atlas URL)
+
+### 2) Clone & Install
 
 ```bash
-$ npm install
+git clone <repo-url>
+cd inventory-catatan-penjualan
+npm install
 ```
 
-## Compile and run the project
+### 3) Konfigurasi Environment
+
+Buat file `.env` (salin dari contoh di bawah):
+
+```env
+PORT=5000
+NODE_ENV=development
+
+DATABASE_URL=mongodb+srv://<db_user>:<db_password>@cluster0.4nfnpcg.mongodb.net/?appName=Cluster0
+
+JWT_ACCESS_SECRET=supersecretaccess
+JWT_REFRESH_SECRET=supersecretrefresh
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL=7d
+
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+```
+
+### 4) Prisma (MongoDB)
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npx prisma generate
+npx prisma db push
 ```
 
-## Run tests
+> **MongoDB** tidak memakai migrate SQL; gunakan `db push`.
+
+### 5) Run App
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
+# default http://localhost:5000
 ```
 
-## Resources
+Health check:
 
-Check out a few resources that may come in handy when working with NestJS:
+```
+GET /
+{
+  "status": "ok",
+  "message": "Inventory API is running",
+  "timestamp": "...",
+  "env": "development",
+  "port": 5000
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 🔐 Autentikasi & Autorisasi
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **Access Token**: dipakai untuk akses endpoint (header `Authorization: Bearer <token>`). Masa berlaku default `15m`.
+- **Refresh Token**: untuk minta token baru di `/auth/refresh`. Masa berlaku default `7d`.
+- **Role**:
+  - `@Auth()` → user terautentikasi
+  - `@Auth(Role.ADMIN)` → hanya admin
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 🧪 Format Response & Error
 
-## License
+### Response Sukses
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Semua response sukses dibungkus `ResponseInterceptor`:
+
+```json
+{ "success": true, "data": { ... } }
+```
+
+### Response Error
+
+Diformat oleh `HttpExceptionFilter`:
+
+```json
+{
+  "success": false,
+  "path": "/endpoint",
+  "error": {
+    "message": "Validation failed",
+    "issues": [{ "path": "lines.0.qty", "message": "...", "code": "custom" }],
+    "name": "ZodError" // (non-prod disertakan name)
+  }
+}
+```
+
+**Prisma Known Errors**:
+
+- `P2002` → Unique constraint violated
+- `P2003` → Foreign key constraint failed
+
+---
+
+## 🛣️ Daftar Endpoint (Ringkas)
+
+> Prefix default: tanpa `/api` (langsung dari Controller). Sertakan header `Authorization` untuk endpoint ber-proteksi.
+
+### Auth
+
+- `POST /auth/register`
+  - body: `{ email, name, password }`
+  - return: `{ accessToken, refreshToken }`
+
+- `POST /auth/login`
+  - body: `{ email, password }`
+  - return: `{ accessToken, refreshToken }`
+
+- `POST /auth/refresh` (Guard: `jwt-refresh`)
+  - header: `Authorization: Bearer <refreshToken>`
+  - return: `{ accessToken, refreshToken }`
+
+**Contoh:**
+
+```bash
+curl -X POST http://localhost:5000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@mail.com","name":"Admin","password":"secret123"}'
+```
+
+---
+
+### Users
+
+- `GET /users/me` — **Auth**
+- `GET /users?q=&page=&limit=&role=` — **ADMIN**
+- `GET /users/:id` — **ADMIN**
+- `PATCH /users/:id` — **ADMIN**
+  - body (opsional): `{ name?, email?, role? }`
+
+- `DELETE /users/:id` — **ADMIN**
+
+---
+
+### Items
+
+- `GET /items?q=&page=&limit=` — **Auth**
+- `GET /items/:id` — **Auth**
+- `POST /items` — **ADMIN**
+  - body: `{ name, costPrice, sellPrice, stock?, imageUrl? }`
+
+- `PATCH /items/:id` — **ADMIN**
+  - body: salah satu dari field di atas (wajib minimal 1 field)
+
+- `DELETE /items/:id` — **ADMIN**
+
+**Catatan Validasi:**
+
+- `imageUrl` boleh kosong/`null` (dipreprocess jadi `undefined`)
+- numeric pakai `z.coerce.number().int().nonnegative()`
+
+---
+
+### Transactions
+
+- `GET /transactions` — **ADMIN**
+- `POST /transactions` — **ADMIN**
+  - body:
+
+    ```json
+    {
+      "type": "SALE|STOCK_IN|REJECT|ADJUST",
+      "date": "2025-10-24T00:00:00.000Z",
+      "note": "string?",
+      "lines": [
+        {
+          "itemId": "<24-hex ObjectId>",
+          "qty": 10,
+          "unitCost": 2400, // opsional (default ke item.costPrice)
+          "unitPrice": 3000 // opsional; hanya dipakai untuk SALE (default ke item.sellPrice)
+        }
+      ],
+      "payment": {
+        "method": "CASH|TRANSFER",
+        "amount": 30000,
+        "transferRef": "ABC123" // opsional
+      }
+    }
+    ```
+
+  - **Aturan penting:**
+    - `payment` hanya diizinkan untuk `type = SALE`
+    - `qty`:
+      - `ADJUST`: boleh negatif/positif tapi **tidak boleh 0**
+      - `SALE|STOCK_IN|REJECT`: **harus > 0**
+
+    - Stok tidak boleh minus (akan error)
+
+**Efek Samping Otomatis:**
+
+- Update stok item
+- `TransactionItem` dibuat untuk tiap `line`
+- Jika `SALE` & `payment` terisi → buat `Payment`
+- Buat satu entry di **Finance**:
+  - `SALE` → income = total `subtotalSell`
+  - `STOCK_IN` → expense = total `subtotalCost`
+  - `REJECT` → expense = 0 (non-omzet, _tidak_ mengubah cashflow keluar)\*
+  - `ADJUST` → expense = 0 (penyesuaian stok non-cash)\*
+  - **balanceAfter** = (saldo sebelumnya) + income − expense
+
+- _Catatan_: Logika current code menganggap `REJECT/ADJUST` tidak menggeser cash (expense=0). Sesuaikan kebutuhan bisnis bila diperlukan.
+
+---
+
+### Finance
+
+Semua **Auth**.
+
+- `GET /finance/summary?from=&to=`
+  - `{ omset, pengeluaran, sisaUang, saldoAkhir, modalStok }`
+
+- `GET /finance/cashflow?from=&to=`
+  - Per tipe transaksi: `{ type, income, expense, net }[]`
+
+- `GET /finance/trend?groupBy=day|week|month&from=&to=`
+  - `{ period, income, expense, net, balance }[]`
+
+- `GET /finance/gross-profit?from=&to=`
+  - `{ income, cogs, grossProfit, marginPct }`
+
+- `GET /finance/payment-breakdown?from=&to=`
+  - `{ CASH: {amount,count}, TRANSFER: {amount,count}, UNPAID: {amount,count} }`
+
+- `GET /finance/statement?q=&page=&limit=&from=&to=`
+  - Pagination + filter: `{ page, limit, total, data: [{ id, date, description, income, expense, balanceAfter }] }`
+
+**Filter Tanggal**
+
+- `from` & `to` (ISO string) diterjemahkan jadi filter `createdAt` (kecuali beberapa endpoint yang pakai `transaction.date`).
+
+---
+
+## 🧩 Validasi & DTO (Zod)
+
+- **DTO** dibuat dari skema Zod via `createZodDto` (`@anatine/zod-nestjs`)
+- Global pipe: `ZodValidationPipe` (mendukung JSON string body)
+- **ObjectId** validasi:
+
+  ```ts
+  const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ObjectId');
+  ```
+
+---
+
+## 🛡️ Middleware/Global
+
+- `app.use(helmet())`
+- `app.enableCors()`
+- `app.use(cookieParser())`
+- `app.useGlobalInterceptors(new ResponseInterceptor())`
+- `app.useGlobalFilters(new HttpExceptionFilter())`
+- `app.useGlobalPipes(new ZodValidationPipe())`
+
+---
+
+## 🔑 Contoh Alur Cepat (cURL)
+
+1. **Register & Login**
+
+```bash
+ACCESS=$(curl -s -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@mail.com","password":"secret123"}' | jq -r .data.accessToken)
+```
+
+2. **Create Item (ADMIN)**
+
+```bash
+curl -X POST http://localhost:5000/items \
+  -H "Authorization: Bearer $ACCESS" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Gula 1kg","costPrice":12000,"sellPrice":15000,"stock":100}'
+```
+
+3. **Buat Transaksi SALE (ADMIN)**
+
+```bash
+curl -X POST http://localhost:5000/transactions \
+  -H "Authorization: Bearer $ACCESS" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type":"SALE",
+    "lines":[{"itemId":"<ITEM_ID>","qty":2}],
+    "payment":{"method":"CASH","amount":30000}
+  }'
+```
+
+4. **Cek Finance Summary**
+
+```bash
+curl -H "Authorization: Bearer $ACCESS" \
+  http://localhost:5000/finance/summary
+```
+
+---
+
+## 🧭 Catatan Implementasi
+
+- **Balance** di `Finance` dihitung dari **entri terakhir**: `(last.balanceAfter ?? 0) + income - expense`.
+- **Modal Stok** dihitung dari `sum(item.stock * item.costPrice)`.
+- **Trend bucket**:
+  - `day`: `YYYY-MM-DD`
+  - `week`: `W:<monday-iso-date>`
+  - `month`: `YYYY-MM`
+
+- **Statement** menggunakan `createdAt` (Finance), bukan `transaction.date`.
+
+---
+
+## 📝 Lisensi
+
+> Tentukan lisensi sesuai kebutuhan (mis. MIT/Proprietary). Tambahkan file `LICENSE`.
+
+---
+
+## 🙌 Kontribusi
+
+- Buka issue/PR dengan deskripsi jelas.
+- Sertakan langkah reproduce untuk bug.
+- Ikuti pola response & error agar konsisten.
+
+---
+
+## 👤 Penulis
+
+**Muhamad Zidan Indratama** — Full-Stack Developer
+Portfolio: [https://zidanindratama.vercel.app](https://zidanindratama.vercel.app)
+Stack: TypeScript, NestJS, Prisma, MongoDB, React/Next.js, Tailwind, dsb.

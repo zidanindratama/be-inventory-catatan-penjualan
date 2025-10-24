@@ -1,6 +1,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { FinanceService } from './finance.service';
+import { Auth } from '../../common/decorators/auth.decorator';
 
+@Auth()
 @Controller('finance')
 export class FinanceController {
   constructor(private svc: FinanceService) {}

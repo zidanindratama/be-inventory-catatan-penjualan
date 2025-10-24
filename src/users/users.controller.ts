@@ -6,23 +6,22 @@ import {
   Patch,
   Body,
   Delete,
-  UseGuards,
   ParseIntPipe,
   Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AuthGuard } from '@nestjs/passport';
 import { Role } from '@prisma/client';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { UpdateUserDto, UpdateUserSchema } from './dto/update-user.dto';
 import { Request } from 'express';
+import { Auth } from 'src/common/decorators/auth.decorator';
 
 @Controller('users')
-@UseGuards(AuthGuard('jwt'))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
+  @Auth()
   getMe(@Req() req: Request) {
     const user = req.user as { sub?: string; id?: string } | undefined;
     const userId = user?.sub ?? user?.id;
@@ -30,6 +29,7 @@ export class UsersController {
   }
 
   @Get()
+  @Auth(Role.ADMIN)
   list(
     @Query('q') q?: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -40,11 +40,13 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Auth(Role.ADMIN)
   getById(@Param('id') id: string) {
     return this.usersService.getById(id);
   }
 
   @Patch(':id')
+  @Auth(Role.ADMIN)
   update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(UpdateUserSchema)) body: UpdateUserDto,
@@ -53,6 +55,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Auth(Role.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

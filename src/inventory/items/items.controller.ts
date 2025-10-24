@@ -17,12 +17,15 @@ import {
   UpdateItemSchema,
 } from './dto/item.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { Auth } from 'src/common/decorators/auth.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('items')
 export class ItemsController {
   constructor(private svc: ItemsService) {}
 
   @Get()
+  @Auth()
   list(
     @Query('q') q?: string,
     @Query('page') page?: number,
@@ -32,17 +35,20 @@ export class ItemsController {
   }
 
   @Get(':id')
+  @Auth()
   get(@Param('id') id: string) {
     return this.svc.get(id);
   }
 
   @Post()
+  @Auth(Role.ADMIN)
   @UsePipes(new ZodValidationPipe(CreateItemSchema))
   create(@Body() dto: CreateItemDto) {
     return this.svc.create(dto);
   }
 
   @Patch(':id')
+  @Auth(Role.ADMIN)
   update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(UpdateItemSchema)) dto: UpdateItemDto,
@@ -51,6 +57,7 @@ export class ItemsController {
   }
 
   @Delete(':id')
+  @Auth(Role.ADMIN)
   remove(@Param('id') id: string) {
     return this.svc.remove(id);
   }
